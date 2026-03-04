@@ -1,5 +1,6 @@
 'use client';
 
+import { VideoVault } from '@/components/VideoVault';
 import { useEffect, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { LogForm } from '@/components/LogForm';
@@ -127,7 +128,19 @@ export default function DashboardPage() {
              <h2 className="text-sm font-mono uppercase tracking-widest text-zinc-400 mb-6">Load vs. Pain Matrix</h2>
              <Analytics logs={logs} />
           </div>
-        </section>
+        {/* TECHNICAL ANALYSIS VAULT */}
+<div className="bg-zinc-900/20 border border-zinc-800 rounded-2xl p-8 mt-6">
+  <div className="flex justify-between items-center mb-6">
+    <h2 className="text-sm font-mono uppercase tracking-widest text-zinc-400">
+      Technical & Rehab Analysis
+    </h2>
+    <span className="text-[10px] bg-[#D4AF37]/10 text-[#D4AF37] px-2 py-1 rounded font-mono">
+      COACH VIEW ENABLED
+    </span>
+  </div>
+  <VideoVault logs={logs} />
+</div>
+</section>
 
         {/* HISTORY COLUMN */}
         <section className="lg:col-span-4">
