@@ -3,7 +3,17 @@
 import { useEffect, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { useParams } from 'next/navigation';
+// app/[username]/page.tsx
 
+export async function generateStaticParams() {
+  // Replace 'athlete1' with your actual username
+  return [{ username: 'athlete1' }]; 
+}
+
+export default async function Page({ params }: { params: Promise<{ username: string }> }) {
+  const { username } = await params;
+  return <div>Welcome to the Command Center, {username}</div>;
+}
 export default function PublicAccountabilityPage() {
   const params = useParams();
   const [profile, setProfile] = useState<any>(null);
