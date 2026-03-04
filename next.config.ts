@@ -1,10 +1,14 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  output: 'export', // Required for Capacitor/Native builds
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  output: 'export',      // Crucial for your iOS build
   images: {
-    unoptimized: true, // Required because static export can't process images on the fly
+    unoptimized: true,   // Prevents image errors in static builds
   },
-  // Note: redirects() are removed because they don't work with 'output: export'
+  /* Note: We removed the 'redirects' block here because 
+     static exports don't support it. We handle the 
+     redirect in your app/page.tsx instead.
+  */
 };
 
 export default nextConfig;
