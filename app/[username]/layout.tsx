@@ -1,7 +1,7 @@
 // app/[username]/layout.tsx
 import { ReactNode } from 'react';
 
-// This fulfills the static export requirement by providing a starting value
+// This tells Next.js to pre-build a folder for your athlete name
 export async function generateStaticParams() {
   return [{ username: 'athlete1' }]; 
 }
