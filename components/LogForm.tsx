@@ -7,19 +7,27 @@ export function LogForm() {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState('');
   
-  // --- ADDED THESE VARIABLES TO TRACK YOUR DATA ---
+  // Tracking your core metrics
   const [rpe, setRpe] = useState(5);
   const [pain, setPain] = useState(1);
   const [rehab, setRehab] = useState(false);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [user, setUser] = useState<any>(null);
 
+  // --- AUTOMATIC DATE LOGIC ---
+  const [executionDate, setExecutionDate] = useState('');
+
+  useEffect(() => {
+    // Sets the preset date to Today (YYYY-MM-DD format)
+    const today = new Date().toISOString().split('T')[0];
+    setExecutionDate(today);
+  }, []);
+
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  // Get user session for the database
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -35,7 +43,6 @@ export function LogForm() {
 
     let videoUrl = '';
 
-    // 1. UPLOAD VIDEO IF IT EXISTS
     if (videoFile) {
       const fileName = `${Date.now()}-${videoFile.name}`;
       const { data, error: uploadError } = await supabase.storage
@@ -50,9 +57,9 @@ export function LogForm() {
       }
     }
 
-    // 2. SAVE THE LOG ENTRY
     const { error } = await supabase.from('logs').insert([
       { 
+        log_date: executionDate, // Uses the automated date
         rpe, 
         pain_level: pain, 
         rehab_done: rehab, 
@@ -72,6 +79,19 @@ export function LogForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 text-[#FAFAFA]">
+      
+      {/* AUTO-DATE INPUT */}
+      <div>
+        <label className="block text-xs font-mono uppercase text-[#8B8B8B] mb-2">Execution Date</label>
+        <input 
+          type="date" 
+          value={executionDate}
+          onChange={(e) => setExecutionDate(e.target.value)}
+          required 
+          className="w-full bg-[#0A0A0A] border border-[#2A2A2A] text-white p-3 focus:outline-none focus:border-[#D4AF37] font-mono" 
+        />
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="block text-xs font-mono uppercase text-[#8B8B8B] mb-2">Overall RPE (1-10)</label>
@@ -108,7 +128,6 @@ export function LogForm() {
         </label>
       </div>
 
-      {/* --- ADDED THIS FILE INPUT FOR YOUR VIDEOS --- */}
       <div>
         <label className="block text-xs font-mono uppercase text-[#8B8B8B] mb-2 text-[#D4AF37]">Archive Technical Analysis Clip</label>
         <input 
