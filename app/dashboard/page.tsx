@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { LogForm } from '@/components/LogForm';
 import { Analytics } from '@/components/Analytics';
+import { Zap, Activity, Trophy, ShieldCheck } from 'lucide-react';
 
 export default function DashboardPage() {
   const [profile, setProfile] = useState<any>(null);
   const [logs, setLogs] = useState<any[]>([]);
-  const [scoreData, setScoreData] = useState({ score: 0, tier: 'CALCULATING...', color: 'text-[#8B8B8B]' });
+  const [scoreData, setScoreData] = useState({ score: 0, tier: 'CALCULATING...', color: 'text-zinc-500' });
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -20,11 +21,9 @@ export default function DashboardPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Fetch Profile
       const { data: profileData } = await supabase.from('profiles').select('*').eq('id', user.id).single();
       setProfile(profileData);
 
-      // Fetch last 30 logs
       const { data: logData } = await supabase
         .from('logs')
         .select('*')
@@ -40,136 +39,115 @@ export default function DashboardPage() {
     fetchData();
   }, [supabase]);
 
-  // DISCIPLINE SCORE ENGINE
   const calculateScore = (recentLogs: any[], currentStreak: number) => {
     if (recentLogs.length === 0) return;
-
     const daysLogged = recentLogs.length;
     const rehabDays = recentLogs.filter(log => log.rehab_done).length;
-    
-    const trainingCompletion = 100; // Assuming if a log exists, training was done
     const rehabCompletion = (rehabDays / daysLogged) * 100;
-    
-    // Cap streak factor at 30 days for this calculation
     const streakFactor = Math.min((currentStreak / 30) * 100, 100);
-
-    const rawScore = (trainingCompletion * 0.5) + (rehabCompletion * 0.2) + (streakFactor * 0.3);
+    const rawScore = (100 * 0.5) + (rehabCompletion * 0.2) + (streakFactor * 0.3);
     const finalScore = parseFloat(rawScore.toFixed(1));
 
     let tier = 'BRONZE';
-    let color = 'text-[#CD7F32]';
-
+    let color = 'text-orange-500';
     if (finalScore >= 95) { tier = 'ELITE'; color = 'text-[#D4AF37]'; }
-    else if (finalScore >= 85) { tier = 'GOLD'; color = 'text-yellow-500'; }
-    else if (finalScore >= 70) { tier = 'SILVER'; color = 'text-[#C0C0C0]'; }
-
+    else if (finalScore >= 85) { tier = 'GOLD'; color = 'text-yellow-400'; }
+    else if (finalScore >= 70) { tier = 'SILVER'; color = 'text-zinc-300'; }
     setScoreData({ score: finalScore, tier, color });
   };
 
   return (
-    <main className="min-h-screen bg-[#0A0A0A] text-[#FAFAFA] p-6 md:p-12 font-sans selection:bg-[#D4AF37] selection:text-black">
+    <main className="min-h-screen bg-[#050505] text-[#FAFAFA] p-4 md:p-10 font-sans">
       
-      <header className="border-b border-[#2A2A2A] pb-6 mb-12 flex flex-col md:flex-row md:justify-between md:items-end gap-4">
+      {/* HUD HEADER */}
+      <header className="max-w-7xl mx-auto mb-10 flex flex-col md:flex-row justify-between items-start md:items-center border-b border-zinc-800 pb-8 gap-6">
         <div>
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tighter uppercase text-[#D4AF37]">
-            {profile?.identity_statement || 'I am building an Olympic Champion.'}
+          <div className="flex items-center gap-2 mb-2">
+            <Trophy size={20} className="text-[#D4AF37]" />
+            <span className="text-xs font-mono tracking-[0.3em] text-zinc-500 uppercase">Olympic Prep Protocol</span>
+          </div>
+          <h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase italic">
+            {profile?.identity_statement || 'Building a Champion'}
           </h1>
-          <p className="text-[#8B8B8B] font-mono text-sm uppercase mt-2 tracking-widest">
-            Athlete: {profile?.username || 'Authenticating...'} // Status: Active
-          </p>
         </div>
         
-        <div className="text-right font-mono bg-[#141414] border border-[#2A2A2A] p-3">
-          <div className="text-xs text-[#8B8B8B] mb-1">2026 OLYMPICS</div>
-          <div className="text-xl text-white">T-MINUS <span className="text-[#D4AF37]">338</span> DAYS</div>
+        <div className="bg-zinc-900/50 border border-zinc-800 p-4 rounded-xl flex items-center gap-6">
+          <div className="text-center">
+            <p className="text-[10px] font-mono text-zinc-500 uppercase">2026 Games</p>
+            <p className="text-xl font-bold text-white">T-338 DAYS</p>
+          </div>
+          <div className="h-10 w-[1px] bg-zinc-800"></div>
+          <div className="text-right">
+            <p className="text-[10px] font-mono text-zinc-500 uppercase">Status</p>
+            <p className="text-xl font-bold text-green-500">SYSTEM LIVE</p>
+          </div>
         </div>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        {/* Left Column: Form & History */}
-        <div className="col-span-1 lg:col-span-2 space-y-8">
-          
-          <div className="border border-[#2A2A2A] bg-[#141414] p-8 shadow-2xl">
-            <h2 className="text-xl font-mono text-[#FAFAFA] mb-6 border-b border-[#2A2A2A] pb-2 uppercase tracking-widest">
-              Daily Execution
-            </h2>
-            <LogForm />
+        {/* STATS ROW */}
+        <section className="lg:col-span-12 grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+          <div className="bg-zinc-900/30 border border-zinc-800 p-6 rounded-2xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+              <Zap size={80} className="text-[#D4AF37]" />
+            </div>
+            <h3 className="text-zinc-500 text-xs font-mono uppercase tracking-widest mb-2">Current Streak</h3>
+            <div className="text-5xl font-black text-white">{profile?.current_streak || 0} <span className="text-sm font-normal text-zinc-500">Days</span></div>
           </div>
 
-          {/* EXECUTION HISTORY LOG */}
-          <div className="border border-[#2A2A2A] bg-[#141414] p-8 shadow-2xl">
-            <h2 className="text-xl font-mono text-[#FAFAFA] mb-6 border-b border-[#2A2A2A] pb-2 uppercase tracking-widest">
-              Execution History
-            </h2>
-            {logs.length === 0 ? (
-              <p className="text-[#8B8B8B] font-mono text-sm">No execution data found.</p>
-            ) : (
-              <div className="space-y-4">
-                {logs.map((log) => (
-                  <div key={log.id} className="border-l-2 border-[#D4AF37] pl-4 py-2 bg-[#0A0A0A] flex justify-between items-center">
-                    <div>
-                      <p className="font-mono text-sm text-white">{log.log_date}</p>
-                      <p className="text-xs text-[#8B8B8B] mt-1">RPE: {log.rpe} | Pain: {log.pain_level}</p>
-                    </div>
-                    <div className="text-right">
-                      <span className={`text-xs font-mono px-2 py-1 ${log.rehab_done ? 'bg-green-900/30 text-green-500' : 'bg-red-900/30 text-red-500'}`}>
-                        {log.rehab_done ? 'REHAB: DONE' : 'REHAB: FAILED'}
-                      </span>
-                    </div>
+          <div className="bg-zinc-900/30 border border-zinc-800 p-6 rounded-2xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+              <ShieldCheck size={80} className={scoreData.color} />
+            </div>
+            <h3 className="text-zinc-500 text-xs font-mono uppercase tracking-widest mb-2">Discipline Score</h3>
+            <div className={`text-5xl font-black ${scoreData.color}`}>{scoreData.score} <span className="text-sm font-normal text-zinc-500">/ 100</span></div>
+          </div>
+
+          <div className="bg-zinc-900/30 border border-zinc-800 p-6 rounded-2xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+              <Activity size={80} className="text-red-500" />
+            </div>
+            <h3 className="text-zinc-500 text-xs font-mono uppercase tracking-widest mb-2">Current Rank</h3>
+            <div className={`text-5xl font-black ${scoreData.color}`}>{scoreData.tier}</div>
+          </div>
+        </section>
+
+        {/* LOGGING COLUMN */}
+        <section className="lg:col-span-8 space-y-6">
+          <div className="bg-zinc-900/20 border border-zinc-800 rounded-2xl p-8 backdrop-blur-sm">
+             <div className="flex items-center gap-3 mb-8">
+               <div className="w-2 h-2 rounded-full bg-[#D4AF37] animate-pulse"></div>
+               <h2 className="text-sm font-mono uppercase tracking-widest text-zinc-400">Log Daily Execution</h2>
+             </div>
+             <LogForm />
+          </div>
+
+          <div className="bg-zinc-900/20 border border-zinc-800 rounded-2xl p-8">
+             <h2 className="text-sm font-mono uppercase tracking-widest text-zinc-400 mb-6">Load vs. Pain Matrix</h2>
+             <Analytics logs={logs} />
+          </div>
+        </section>
+
+        {/* HISTORY COLUMN */}
+        <section className="lg:col-span-4">
+          <div className="bg-zinc-900/20 border border-zinc-800 rounded-2xl p-8 sticky top-10">
+            <h2 className="text-sm font-mono uppercase tracking-widest text-zinc-400 mb-6">Recent Logs</h2>
+            <div className="space-y-4">
+              {logs.map((log) => (
+                <div key={log.id} className="group border-b border-zinc-800/50 pb-4 last:border-0">
+                  <div className="flex justify-between items-start mb-1">
+                    <span className="text-xs font-mono text-zinc-500 uppercase">{log.log_date}</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${log.rehab_done ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                      {log.rehab_done ? 'REHAB DONE' : 'REHAB FAILED'}
+                    </span>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-        </div>
-        {/* ANALYTICS ENGINE */}
-          <div className="border border-[#2A2A2A] bg-[#141414] p-8 shadow-2xl">
-            <div className="flex justify-between items-end border-b border-[#2A2A2A] pb-2 mb-6">
-              <h2 className="text-xl font-mono text-[#FAFAFA] uppercase tracking-widest">
-                Load vs. Pain Matrix
-              </h2>
-              <div className="flex gap-4 text-xs font-mono">
-                <span className="text-[#D4AF37]">● RPE</span>
-                <span className="text-[#8B0000]">● PAIN</span>
-              </div>
-            </div>
-            <Analytics logs={logs} />
-          </div>
-
-        {/* Right Column: Streaks & Score */}
-        <div className="col-span-1 space-y-8">
-          
-          <div className="border border-[#2A2A2A] bg-[#141414] p-6 shadow-2xl text-center">
-            <h3 className="text-sm font-mono text-[#8B8B8B] uppercase mb-2 tracking-widest">Current Streak</h3>
-            <div className="text-6xl font-bold text-white mb-2">
-              {profile ? profile.current_streak : '0'}
-            </div>
-            <p className="text-xs text-[#D4AF37] uppercase tracking-wider">Days of Relentless Execution</p>
-          </div>
-
-          <div className="border border-[#2A2A2A] bg-[#141414] p-6 shadow-2xl">
-            <h3 className="text-sm font-mono text-[#8B8B8B] uppercase mb-4 tracking-widest">Discipline Score</h3>
-            <div className="flex items-end gap-2 mb-2">
-              <span className={`text-5xl font-bold ${scoreData.color}`}>{scoreData.score}</span>
-              <span className="text-lg text-white font-mono pb-1">/ 100</span>
-            </div>
-            <p className={`text-sm font-bold tracking-widest uppercase ${scoreData.color}`}>{scoreData.tier} RANK</p>
-            <div className="mt-4 pt-4 border-t border-[#2A2A2A] space-y-2">
-              <p className="text-xs text-[#8B8B8B] font-mono flex justify-between">
-                <span>Training Compliance:</span> <span className="text-white">50% WGT</span>
-              </p>
-              <p className="text-xs text-[#8B8B8B] font-mono flex justify-between">
-                <span>Rehab Compliance:</span> <span className="text-white">20% WGT</span>
-              </p>
-              <p className="text-xs text-[#8B8B8B] font-mono flex justify-between">
-                <span>Streak Factor:</span> <span className="text-white">30% WGT</span>
-              </p>
+                  <p className="text-sm font-medium text-zinc-300">RPE: {log.rpe} | Pain: {log.pain_level}</p>
+                </div>
+              ))}
             </div>
           </div>
-
-        </div>
+        </section>
 
       </div>
     </main>
